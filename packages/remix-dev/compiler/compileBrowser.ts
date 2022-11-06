@@ -16,6 +16,12 @@ import { mdxPlugin } from "./plugins/mdx";
 import { urlImportsPlugin } from "./plugins/urlImportsPlugin";
 import { type WriteChannel } from "./utils/channel";
 import { writeFileSafe } from "./utils/fs";
+import {consumeDependenciesFromWindowPlugin} from "./plugins/consumeDependenciesFromWindowPlugin"
+
+const exposeDependenciesOnWindowShim = path.resolve(
+    __dirname,
+    "./shims/exposeDependenciesShim.ts"
+);
 
 export type BrowserCompiler = {
   // produce ./public/build/
@@ -80,6 +86,26 @@ const createEsbuildConfig = (
     yarnPnpPlugin(),
   ];
 
+  let inject: string[] = [];
+
+  if (config.isRemixMicroFrontend === "host") {
+    inject = [exposeDependenciesOnWindowShim];
+  }
+
+  if (config.isRemixMicroFrontend === "client") {
+    plugins = [
+      ...plugins,
+      consumeDependenciesFromWindowPlugin({
+        // eslint-disable-next-line import/no-extraneous-dependencies
+        react: Object.keys(require("react")),
+        // eslint-disable-next-line import/no-extraneous-dependencies
+        "react-dom": Object.keys(require("react-dom")),
+        // eslint-disable-next-line import/no-extraneous-dependencies
+        "@remix-run/react": Object.keys(require("@remix-run/react"))
+      })
+    ];
+  }
+
   return {
     entryPoints,
     outdir: config.assetsBuildDirectory,
@@ -111,6 +137,7 @@ const createEsbuildConfig = (
     jsx: "automatic",
     jsxDev: options.mode !== "production",
     plugins,
+    inject,
   };
 };
 

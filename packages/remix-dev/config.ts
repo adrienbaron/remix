@@ -157,6 +157,8 @@ export interface AppConfig {
     | string
     | string[]
     | (() => Promise<string | string[]> | string | string[]);
+
+  isRemixMicroFrontend?: "host" | "client"
 }
 
 /**
@@ -275,6 +277,8 @@ export interface RemixConfig {
    * The path for the tsconfig file, if present on the root directory.
    */
   tsconfigPath: string | undefined;
+
+  isRemixMicroFrontend?: "host" | "client"
 }
 
 /**
@@ -409,6 +413,7 @@ export async function readConfig(
   }
 
   let publicPath = addTrailingSlash(appConfig.publicPath || defaultPublicPath);
+  let isRemixMicroFrontend = appConfig.isRemixMicroFrontend;
 
   let rootRouteFile = findEntry(appDirectory, "root");
   if (!rootRouteFile) {
@@ -495,6 +500,7 @@ export async function readConfig(
     mdx,
     watchPaths,
     tsconfigPath,
+    isRemixMicroFrontend,
   };
 }
 
